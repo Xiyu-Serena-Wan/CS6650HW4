@@ -16,15 +16,15 @@ public class ConsumerThread implements Runnable {
     private String exchangeName;
     private String queueName;
     private Connection connection;
-    private Map<String, Set<String>> matchRecord;
-    private Map<String, AtomicInteger[]> statRecord;
+    private Map<Integer, Set<String>> matchRecord;
+    private Map<Integer, AtomicInteger[]> statRecord;
     private int queueSize;
     private Gson gson = new Gson();
     private static final int MATCHES_NUM = 100;
     private static final boolean DURABLE = true; // persistent queue
 
     public ConsumerThread(String exchangeName, String queueName, Connection connection,
-                          Map<String, Set<String>> matchRecord, Map<String, AtomicInteger[]> statRecord, int queueSize) {
+                          Map<Integer, Set<String>> matchRecord, Map<Integer, AtomicInteger[]> statRecord, int queueSize) {
         this.exchangeName = exchangeName;
         this.queueName = queueName;
         this.connection = connection;
@@ -46,24 +46,11 @@ public class ConsumerThread implements Runnable {
             DeliverCallback deliverCallback = (consumerTag, delivery) -> {
                 String message = new String(delivery.getBody(), "UTF-8");
                 JsonObject info = this.gson.fromJson(message, JsonObject.class);
-                String swiper = info.get("swiper").getAsString();
+                //String swiper = info.get("swiper").getAsString();
+                int swiper = info.get("swiper").getAsInt();
                 boolean userLiked = info.get("userLiked").getAsBoolean();
                 int idx = userLiked ? 0 : 1;
                 if (userLiked) {
-//                    if (!matchAllTime.containsKey(swiper)) {
-//                        Set<String> mySet = ConcurrentHashMap.newKeySet();
-//                        matchAllTime.put(swiper, mySet);
-//                    }
-//                    if (matchAllTime.get(swiper).size() < MATCHES_NUM) {
-//                        String swipee = info.get("swipee").getAsString();
-//                        if (matchAllTime.get(swiper).add(swipee)) {
-//                            if (!matchRecord.containsKey(swiper)) {
-//                                Set<String> mySet = ConcurrentHashMap.newKeySet();
-//                                matchRecord.put(swiper, mySet);
-//                            }
-//                            matchRecord.get(swiper).add(swipee);
-//                        }
-//                    }
                     if (!matchRecord.containsKey(swiper)) {
                         Set<String> mySet = ConcurrentHashMap.newKeySet();
                         matchRecord.put(swiper, mySet);

@@ -11,9 +11,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-import com.mongodb.*;
+import db.MongoManager;
 import org.bson.Document;
-import org.bson.conversions.Bson;
 
 import static com.mongodb.client.model.Filters.eq;
 
@@ -24,16 +23,7 @@ public class StatsServlet extends HttpServlet {
 
     @Override
     public void init() throws ServletException {
-        ConnectionString connectionString = new ConnectionString(Constant.MONGO_URL);
-        MongoClientSettings settings = MongoClientSettings.builder()
-                .applyConnectionString(connectionString)
-                .serverApi(ServerApi.builder()
-                        .version(ServerApiVersion.V1)
-                        .build())
-                .build();
-        MongoClient mongoClient = MongoClients.create(settings);
-        MongoDatabase database = mongoClient.getDatabase(Constant.DB_NAME);
-        this.collection = database.getCollection(Constant.COLLECTION_STATS);
+        collection = MongoManager.getClient().getDatabase(Constant.DB_NAME).getCollection(Constant.COLLECTION_STATS);
     }
 
     @Override
@@ -55,9 +45,8 @@ public class StatsServlet extends HttpServlet {
             return;
         }
 
-        String userId = urlParts[1];
-        Bson projectionFields = Projections.fields(Projections.excludeId());
-        Document doc = collection.find(eq("swiper", userId)).projection(projectionFields).first();
+        int id = Integer.parseInt(urlParts[1]);
+        Document doc = collection.find(eq("_id", id)).first();
 
         if (doc == null) {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);

@@ -4,7 +4,6 @@ import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Projections.*;
 
 import com.mongodb.client.*;
-import com.mongodb.client.model.Projections;
 import constant.Constant;
 
 import javax.servlet.ServletException;
@@ -14,7 +13,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-import com.mongodb.*;
+import db.MongoManager;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
@@ -25,16 +24,7 @@ public class MatchesServlet extends HttpServlet {
 
     @Override
     public void init() throws ServletException {
-        ConnectionString connectionString = new ConnectionString(Constant.MONGO_URL);
-        MongoClientSettings settings = MongoClientSettings.builder()
-                .applyConnectionString(connectionString)
-                .serverApi(ServerApi.builder()
-                        .version(ServerApiVersion.V1)
-                        .build())
-                .build();
-        MongoClient mongoClient = MongoClients.create(settings);
-        MongoDatabase database = mongoClient.getDatabase(Constant.DB_NAME);
-        this.collection = database.getCollection(Constant.COLLECTION_MATCHES);
+        collection = MongoManager.getClient().getDatabase(Constant.DB_NAME).getCollection(Constant.COLLECTION_MATCHES);
     }
 
     @Override
@@ -56,9 +46,11 @@ public class MatchesServlet extends HttpServlet {
             return;
         }
 
-        String userId = urlParts[1];
-        Bson projectionFields = fields(slice("matchList", 100), excludeId());
-        Document doc = collection.find(eq("swiper", userId)).projection(projectionFields).first();
+        response.setStatus(HttpServletResponse.SC_OK);
+
+        int id = Integer.parseInt(urlParts[1]);
+        Bson projectionFields = slice("matchList", 100);
+        Document doc = collection.find(eq("_id", id)).projection(projectionFields).first();
 
         if (doc == null) {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
